@@ -104,13 +104,9 @@ describe("Authentication", () => {
   });
 
   describe("#logout()", () => {
-    it("Calls post() to the logout endpoint", () => {
-      client.logout();
-      expect(client.api.post).to.have.been.calledWith("/auth/logout");
-    });
+    it("Nullifies the token, url, and project", async () => {
+      await client.logout();
 
-    it("Nullifies the token, url, and project", () => {
-      client.logout();
       expect(client.config.token).to.be.undefined;
       expect(client.config.url).to.be.undefined;
       expect(client.config.project).to.equal("_");
