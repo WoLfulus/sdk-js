@@ -104,6 +104,11 @@ describe("Authentication", () => {
   });
 
   describe("#logout()", () => {
+    it("Calls post() to the logout endpoint", () => {
+      client.logout();
+      expect(client.api.post).to.have.been.calledWith("/auth/logout");
+    });
+
     it("Nullifies the token, url, and project", () => {
       client.logout();
       expect(client.config.token).to.be.undefined;
@@ -377,33 +382,6 @@ describe("Authentication", () => {
 
       this.clock.tick(11000);
       expect(client.api.auth.refreshIfNeeded).to.have.been.calledTwice;
-    });
-  });
-
-  describe("#loggedIn", () => {
-    it("Returns true if the client has a valid accesstoken, url, project, and is not expired", () => {
-      client.config.token = jwt.sign({ foo: "bar" }, "secret-string", {
-        expiresIn: "20s",
-        noTimestamp: true,
-      });
-      client.config.localExp = Date.now() + 10e3; // set expiration time in future
-
-      expect(client.loggedIn).to.equal(true);
-    });
-
-    it("Returns false if the accesstoken, url, or project is missing", () => {
-      client.config.url = null;
-      expect(client.loggedIn).to.equal(false);
-
-      client.config.token = jwt.sign({ foo: "bar" }, "secret-string", {
-        expiresIn: "20s",
-        noTimestamp: true,
-      });
-      expect(client.loggedIn).to.equal(false);
-
-      client.config.url = "https://demo-api.getdirectus.com";
-      client.config.localExp = Date.now() + 10e3; // set expiration time in future
-      expect(client.loggedIn).to.equal(true);
     });
   });
 });
