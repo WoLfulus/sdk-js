@@ -56,10 +56,6 @@ type PrimaryKeyType = string | number;
  * @uses Configuration
  */
 export class SDK {
-  public get loggedIn(): boolean {
-    return this.api.auth.isLoggedIn();
-  }
-
   public get payload(): any {
     if (!this.config.token) {
       return null;

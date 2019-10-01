@@ -28,7 +28,6 @@ interface IAuthenticationInjectableProps {
 
 export interface IAuthentication {
   refreshInterval?: number;
-  isLoggedIn(): boolean;
   login(credentials: ILoginCredentials, options?: ILoginOptions): Promise<ILoginResponse>;
   logout(): void;
   refreshIfNeeded(): Promise<[boolean, Error?]>;
@@ -72,25 +71,6 @@ export class Authentication implements IAuthentication {
     if (config.token && config.token.includes(".")) {
       this.startInterval(true);
     }
-  }
-
-  /**
-   * If the current auth status is logged in
-   * @return {boolean}
-   */
-  public isLoggedIn(): boolean {
-    if (
-      isString(this.config.token) &&
-      isString(this.config.url) &&
-      isString(this.config.project) &&
-      isObject(this.getPayload())
-    ) {
-      if (this.config.localExp > Date.now()) {
-        // Not expired, succeed
-        return true;
-      }
-    }
-    return false;
   }
 
   /**
