@@ -35,6 +35,8 @@ export interface IAuthentication {
   refresh(token: string): Promise<IRefreshTokenResponse>;
 }
 
+export type AuthModes = "jwt" | "cookie";
+
 /**
  * Handles all authentication related logic, decoupled from the core
  * @internal
@@ -108,34 +110,58 @@ export class Authentication implements IAuthentication {
       this.config.project = credentials.project;
     }
 
+    if (options && isString(options.mode)) {
+      this.config.mode = options.mode;
+    }
+
     if (credentials.persist || (options && options.persist) || this.config.persist) {
       // use interval for login refresh when option persist enabled
       this.startInterval();
     }
 
-    return new Promise((resolve, reject) => {
-      this.inject
-        .post("/auth/authenticate", {
-          email: credentials.email,
-          password: credentials.password,
-        })
-        .then((res: IAuthenticateResponse) => {
-          // save new token in configuration
-          return (this.config.token = res.data.token);
-        })
-        .then((token: string) => {
-          // expiry date is the moment we got the token + 5 minutes
-          this.config.localExp = new Date(Date.now() + this.config.tokenExpirationTime).getTime();
+    console.log(options.mode);
 
-          resolve({
-            localExp: this.config.localExp,
-            project: this.config.project,
-            token,
-            url: this.config.url,
-          });
-        })
-        .catch(reject);
-    });
+    if (this.config.mode === "cookie") {
+      return new Promise((resolve, reject) => {
+        this.inject
+          .post("/auth/authenticate", {
+            email: credentials.email,
+            password: credentials.password,
+            mode: "cookie"
+          })
+          .then(() => {
+            resolve({
+              project: this.config.project,
+              url: this.config.url
+            });
+          })
+          .catch(reject);
+      });
+    } else if (this.config.mode === "jwt") {
+      return new Promise((resolve, reject) => {
+        this.inject
+          .post("/auth/authenticate", {
+            email: credentials.email,
+            password: credentials.password,
+          })
+          .then((res: IAuthenticateResponse) => {
+            // save new token in configuration
+            return (this.config.token = res.data.token);
+          })
+          .then((token: string) => {
+            // expiry date is the moment we got the token + 5 minutes
+            this.config.localExp = new Date(Date.now() + this.config.tokenExpirationTime).getTime();
+
+            resolve({
+              localExp: this.config.localExp,
+              project: this.config.project,
+              token,
+              url: this.config.url,
+            });
+          })
+          .catch(reject);
+      });
+    }
   }
 
   /**
