@@ -10,7 +10,7 @@ import { IAPI } from "./API";
 // Scheme types
 import { IAuthenticateResponse } from "./schemes/auth/Authenticate";
 import { ILoginCredentials, ILoginOptions } from "./schemes/auth/Login";
-import { ILoginResponse, RefreshIfNeededResponse } from "./schemes/response/Login";
+import { ILoginResponse, RefreshIfNeededResponse, ILogoutResponse } from "./schemes/response/Login";
 import { IRefreshTokenResponse } from "./schemes/response/Token";
 
 // Utilities
@@ -29,7 +29,7 @@ interface IAuthenticationInjectableProps {
 export interface IAuthentication {
   refreshInterval?: number;
   login(credentials: ILoginCredentials, options?: ILoginOptions): Promise<ILoginResponse>;
-  logout(): void;
+  logout(): Promise<ILogoutResponse>;
   refreshIfNeeded(): Promise<[boolean, Error?]>;
   refresh(token: string): Promise<IRefreshTokenResponse>;
 }
@@ -99,8 +99,6 @@ export class Authentication implements IAuthentication {
       this.startInterval();
     }
 
-    console.log(options.mode);
-
     if (this.config.mode === "cookie") {
       return new Promise((resolve, reject) => {
         this.inject
@@ -147,12 +145,14 @@ export class Authentication implements IAuthentication {
   /**
    * Logs the user out by "forgetting" the token, and clearing the refresh interval
    */
-  public logout(): void {
+  public logout(): Promise<ILogoutResponse> {
     this.config.reset();
 
     if (this.refreshInterval) {
       this.stopInterval();
     }
+
+    return this.inject.post<ILogoutResponse>("/auth/logout");
   }
 
   /// REFRESH METHODS ----------------------------------------------------------
